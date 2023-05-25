@@ -1,9 +1,19 @@
+import pyvista as pv
+from typing import Any
 import numpy as np
 from pathlib import Path
 from vcti.engine.multivaluedarray import MultiValuedArray
 import vcti.cax.cax as caxlib
 PATH_SEP = '/'
 GEOM_NAME = 'Geometry'
+
+ug = pv.UnstructuredGrid()
+ug.cell_arrays()
+
+
+class DataArray:
+    def __init__(self, *args: Any, **kwds: Any) -> Any:
+        pass
 
 
 def child_path(parent_path, child_name):
@@ -39,11 +49,12 @@ class ResultData:
         self.mesh_ids = None
         self.step_ids = None
 
+
 class CaxGenerator:
     def __init__(self,
-                 cax_file: str or Path or caxlib.Model
-                 ):
-        
+                 cax_file: str or Path or caxlib.Model,
+                 *args: Any, **kwds: Any
+                 ) -> None:
         """
         Used to generate cax with data arrays.
 
@@ -73,7 +84,7 @@ class CaxGenerator:
             else:
                 self._model_name = "CAX-Model"
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         """
         Initializes member variables
         """
@@ -94,14 +105,14 @@ class CaxGenerator:
         self._result_list = None
         self._result_data = {}
 
-    def set_caemodel(self, caemodel=None):
+    def set_caemodel(self, caemodel=None) -> None:
         """
         Set cae model from which the data has to be extracted.
         If None, the other data arrays can be used to export the data to cax
         """
         self._cae_model = caemodel
 
-    def _get_paths(self, partnames):
+    def _get_paths(self, partnames) -> list:
         if isinstance(partnames, str):
             partnames = [partnames]
         model_path = child_path('', self.model_name)
@@ -110,18 +121,25 @@ class CaxGenerator:
                      for x in partnames]
         return cax_paths
 
-    def _get_cax_paths(self):
+    def _get_cax_paths(self) -> list:
         if self.get_part_names() is None:
             raise Exception("Part names are empty.")
         cax_paths = self._get_paths(self._part_names)
         return cax_paths
 
-    def _add_paths(self):
+    def add_node(self, nodetype: caxlib.NodeType, path: str, attrs: dict = None) -> int:
+        geom_node_id = -1
+        if self._cae_model is not None:
+            geom_node_id = self._cax_model.add_node(nodetype, path, attrs)
+
+        return geom_node_id
+
+    def _add_paths(self) -> None:
         cax_paths = self._get_cax_paths()
         self.mesh_ids = self._cax_model.add_assembly_components(
             cax_paths, PATH_SEP)
 
-    def _load_cax_model(self):
+    def _load_cax_model(self) -> None:
         if self._cax_model is not None:
             return
 
@@ -135,7 +153,7 @@ class CaxGenerator:
                                 application_version='1.0',
                                 change_history_comment='Test')
 
-    def _add_step_data(self):
+    def _add_step_data(self) -> None:
         if self._cax_model is None:
             raise Exception("CaxModel is not loaded.")
 
@@ -149,13 +167,13 @@ class CaxGenerator:
         else:
             raise Exception("Improper step data.")
 
-    def set_applicationname(self, applicationname):
+    def set_applicationname(self, applicationname) -> None:
         """
         Application name
         """
         self._application_name = applicationname
 
-    def get_applicationname(self):
+    def get_applicationname(self) -> str:
         """
         Default application name. Can be overridden by child class.
         """
@@ -163,19 +181,19 @@ class CaxGenerator:
             self._application_name = "CaxGenerator"
         return self._application_name
 
-    def set_modelname(self, model_name):
+    def set_modelname(self, model_name) -> None:
         """
         Model Name
         """
         self._model_name = model_name
 
-    def set_model_type(self, model_type="Geometry"):
+    def set_model_type(self, model_type="Geometry") -> None:
         """
         set the Model type, default is Geometry
         """
         self._model_type = model_type
 
-    def get_model_type(self):
+    def get_model_type(self) -> str:
         """
         Get the Model type. Default type is Geometry.
         """
@@ -184,14 +202,14 @@ class CaxGenerator:
 
         return self._model_type
 
-    def set_step_list(self, step_list):
+    def set_step_list(self, step_list) -> None:
         """
         Set step list. Can be list of tuple with Instance info,
         CaxLib stepData object.
         """
         self._step_list = step_list
 
-    def get_step_list(self, step_list):
+    def get_step_list(self, step_list) -> list:
         """
         Get step list
         Default is L1
@@ -200,115 +218,115 @@ class CaxGenerator:
         self._step_list = step_list
         return self._step_list
 
-    def set_part_names(self, part_names):
+    def set_part_names(self, part_names) -> None:
         """
         Part Names
         """
         self._part_names = part_names
 
-    def get_part_names(self):
+    def get_part_names(self) -> list:
         """
         Part Names
         """
         return self._part_names
 
-    def set_coordinates(self, coordinates):
+    def set_coordinates(self, coordinates) -> None:
         """
         set Coordinates.
         Coordinates should be a numpy array.
         """
         self._coordinates = coordinates
 
-    def get_coordinates(self):
+    def get_coordinates(self) -> np.ndarray:
         """
         Get Coordinates. This function can be overridden by child class.
         """
         return self._coordinates
 
-    def set_nodeids(self, nodeids):
+    def set_nodeids(self, nodeids) -> None:
         """
         Set NodeIds.
         Node Ids should be a numpy array.
         """
         self._node_ids = nodeids
 
-    def get_nodeids(self,):
+    def get_nodeids(self) -> np.ndarray:
         """
         Get NodeIds. 
         This function can be overridden by child class.
         """
         return self._node_ids
 
-    def set_polylengths(self, polylengths):
+    def set_polylengths(self, polylengths) -> None:
         """
         Set Polylengths.
         Node Ids should be a numpy array.
         """
         self._polylengths = polylengths
 
-    def get_polylengths(self):
+    def get_polylengths(self) -> np.ndarray:
         """
         Get Elemental Polylengths. 
         This function can be overridden by child class.
         """
         return self._polylengths
 
-    def set_connectivity(self, connectivity):
+    def set_connectivity(self, connectivity) -> None:
         """
         Set connectivity.
         Node Ids should be a numpy array.
         """
         self._connectivity = connectivity
 
-    def get_connectivity(self):
+    def get_connectivity(self) -> np.ndarray:
         """
         Get Element connectivity. 
         This function can be overridden by child class.
         """
         return self._connectivity
 
-    def set_result_list(self, result_list):
+    def set_result_list(self, result_list) -> None:
         """
         Set Results list.
         Node Ids should be a numpy array.
         """
         self._result_list = result_list
 
-    def get_results_list(self):
+    def get_results_list(self) -> list:
         """
         Get List of results available. 
         This function can be overridden by child class.
         """
         return self._result_list
 
-    def set_result_data(self, i, result_data):
+    def set_result_data(self, i, result_data) -> None:
         """
         Set Result data at index.
         Node Ids should be a numpy array.
         """
         self._result_data[i] = result_data
 
-    def get_result_values(self, i):
+    def get_result_values(self, i) -> ResultData:
         """
         Get Result Data Object at index. 
         This function can be overridden by child class.
         """
         self._result_data.get(i, None)
 
-    def set_part_face_mva(self, part_face_mva):
+    def set_part_face_mva(self, part_face_mva) -> None:
         """
         Set MultivaluedArray object of Parts and their faces data.
         """
         self._part_faces_mva = part_face_mva
 
-    def create_part_face_mva(self):
+    def create_part_face_mva(self) -> MultiValuedArray:
         """
         Function to create a Part_face_mva variable.
         This function has to be overridden by subclass.
         """
         return self._part_faces_mva
 
-    def add_components(self, part):
+    def add_components(self, part) -> list:
         """
         Add Component to the cax model. where part is the name of the part.
         returns mesh id of the added component.
@@ -325,7 +343,7 @@ class CaxGenerator:
 
         return mesh_ids
 
-    def load_cax_model(self):
+    def load_cax_model(self) -> None:
         """
         Load the cax model
         """
@@ -333,29 +351,29 @@ class CaxGenerator:
             self._load_cax_model()
         except:
             raise Exception("Failed to export cax.")
-    
-    def add_paths(self):
+
+    def add_paths(self) -> None:
         """
         Add partnames to the cax model.
         Has to be called after loading the cax model function.
         """
         self._add_paths()
 
-    def add_step_data(self):
+    def add_step_data(self) -> None:
         """
         Add stepdata to the cax model.
         Has to be called after loading the cax model function.
         """
         self._add_step_data()
 
-    def add_array(self, datasettype, array, meshids, steplist):
+    def add_array(self, datasettype, array, meshids, steplist) -> None:
         """
         Add array to the cax model.
         """
         self._cax_model.add_array_property(
             datasettype, array, meshids, steplist)
 
-    def generate_cax(self):
+    def generate_cax(self) -> None:
         """
         Generates cax. Has to be called after adding all the data arrays 
         required to export to cax.
@@ -372,7 +390,7 @@ class CaxGenerator:
         self.write_geometry()
         self.add_results()
 
-    def write_geometry(self):
+    def write_geometry(self) -> None:
         """
         Exports Geometry dato to cax
         """
@@ -406,7 +424,7 @@ class CaxGenerator:
                        self.get_nodeids(), self.mesh_ids,
                        self._step_list)
 
-    def add_results(self):
+    def add_results(self) -> None:
         """
         Adds result to cax model
         """
@@ -418,12 +436,12 @@ class CaxGenerator:
                                                      result_data.values, result_data.mesh_ids,
                                                      result_data.step_ids)
 
-    def add_result_data(self, result_name, result_data, Datasettype, meshids, steplist):
+    def add_result_data(self, result_name, result_data, Datasettype, meshids, steplist) -> None:
         self._cax_model.add_named_array_property(result_name, Datasettype,
                                                  result_data, meshids,
                                                  steplist)
 
-    def close(self):
+    def close(self) -> None:
         """
         Closes the cax model.
         """
